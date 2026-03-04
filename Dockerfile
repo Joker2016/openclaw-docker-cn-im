@@ -62,7 +62,7 @@ RUN cd /home/node/.openclaw/extensions && \
   git clone --depth 1 https://github.com/justlovemaki/qqbot.git && \
   cd qqbot && \
   timeout 300 openclaw plugins install . || true && \
-  timeout 300 openclaw plugins install @sunnoy/wecom || true && \
+  timeout 300 openclaw plugins install @sunnoy/wecom@v1.5.1 || true && \
   find /home/node/.openclaw/extensions -name ".git" -type d -exec rm -rf {} + && \
   rm -rf /home/node/.openclaw/qqbot/.git && \
   rm -rf /tmp/* /home/node/.npm /home/node/.cache

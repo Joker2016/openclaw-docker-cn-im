@@ -272,7 +272,19 @@ def sync():
             old_app_id = feishu_raw.pop('appId', '')
             old_app_secret = feishu_raw.pop('appSecret', '')
             old_bot_name = feishu_raw.pop('botName', 'OpenClaw Bot')
-            feishu_raw['accounts'] = {'main': {'appId': old_app_id, 'appSecret': old_app_secret, 'botName': old_bot_name}}
+            feishu_raw['accounts'] = {'default': {'appId': old_app_id, 'appSecret': old_app_secret, 'botName': old_bot_name}}
+
+        # 飞书账号键名兼容：将 accounts.main 归一到 accounts.default
+        feishu_accounts = feishu_raw.get('accounts')
+        if isinstance(feishu_accounts, dict) and 'main' in feishu_accounts:
+            print('检测到飞书 accounts.main，迁移为 accounts.default...')
+            main_account = feishu_accounts.pop('main')
+            default_account = feishu_accounts.get('default')
+            if not isinstance(default_account, dict):
+                feishu_accounts['default'] = main_account if isinstance(main_account, dict) else {}
+            elif isinstance(main_account, dict):
+                for k, v in main_account.items():
+                    default_account.setdefault(k, v)
 
         # --- 0.5 企业微信旧格式迁移到多账号结构（兼容）---
         normalize_wecom_config(ensure_path(config, ['channels']))
@@ -370,13 +382,13 @@ def sync():
         
         def sync_feishu(c, e):
             c.update({'enabled': True, 'dmPolicy': 'pairing', 'groupPolicy': 'open'})
-            main = ensure_path(c, ['accounts', 'main'])
-            main.update({
-                'appId': e['FEISHU_APP_ID'], 
+            default_account = ensure_path(c, ['accounts', 'default'])
+            default_account.update({
+                'appId': e['FEISHU_APP_ID'],
                 'appSecret': e['FEISHU_APP_SECRET'],
                 'botName': e.get('FEISHU_BOT_NAME') or 'OpenClaw Bot'
             })
-            if e.get('FEISHU_DOMAIN'): main['domain'] = e['FEISHU_DOMAIN']
+            if e.get('FEISHU_DOMAIN'): default_account['domain'] = e['FEISHU_DOMAIN']
 
         def sync_dingtalk(c, e):
             c.update({
