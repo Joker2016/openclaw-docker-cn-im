@@ -70,12 +70,15 @@ RUN cd /home/node/.openclaw/extensions && \
   git clone --depth 1 https://github.com/justlovemaki/qqbot.git && \
   cd qqbot && \
   timeout 300 openclaw plugins install . || true && \
-  timeout 300 openclaw plugins install @sunnoy/wecom || true && \
-    # 如果@sunnoy/wecom插件安装成功，添加WebSocket长连接所需的依赖
-    if [ -d "/home/node/.openclaw/extensions/wecom" ]; then \
-      cd /home/node/.openclaw/extensions/wecom && \
-      echo "安装企业微信长连接依赖..." && \
-      npm install ws@^8.17.0 node-cache@^5.1.2 pino@^9.3.1 --save --omit=dev --legacy-peer-deps || echo "依赖安装失败，但继续..." ; \
+  timeout 300 openclaw plugins install @wecom/wecom-openclaw-plugin || true && \
+    # 如果@wecom/wecom-openclaw-plugin插件安装成功，添加WebSocket长连接所需的依赖
+    if [ -d "/home/node/.openclaw/extensions/wecom-openclaw-plugin" ] || [ -d "/home/node/.openclaw/extensions/wecom" ]; then \
+      WECOM_DIR=$(find /home/node/.openclaw/extensions -maxdepth 1 -name "*wecom*" -type d | head -1) && \
+      if [ -n "$WECOM_DIR" ]; then \
+        cd "$WECOM_DIR" && \
+        echo "安装企业微信长连接依赖..." && \
+        npm install ws@^8.17.0 node-cache@^5.1.2 pino@^9.3.1 --save --omit=dev --legacy-peer-deps || echo "依赖安装失败，但继续..." ; \
+      fi ; \
     fi && \
   # 预执行安装命令（容器内需手动交互，此处仅作声明或环境准备）
   # feishu-plugin-onboard install && \
