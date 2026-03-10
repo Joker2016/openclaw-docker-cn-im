@@ -687,13 +687,24 @@ cleanup() {
 trap cleanup SIGTERM SIGINT SIGQUIT
 
 # 启动网关
-gosu node env HOME=/home/node DBUS_SESSION_BUS_ADDRESS=/dev/null \
-    BUN_INSTALL="/usr/local" PATH="/usr/local/bin:$PATH" \
-    openclaw gateway run \
-    --bind "$OPENCLAW_GATEWAY_BIND" \
-    --port "$OPENCLAW_GATEWAY_PORT" \
-    --token "$OPENCLAW_GATEWAY_TOKEN" \
-    --verbose &
+if [ "${OPENCLAW_RUN_AS_ROOT:-false}" = "true" ]; then
+    echo "🔓 OPENCLAW_RUN_AS_ROOT=true，以 root 模式启动 OpenClaw..."
+    env HOME=/home/node DBUS_SESSION_BUS_ADDRESS=/dev/null \
+        BUN_INSTALL="/usr/local" PATH="/usr/local/bin:$PATH" \
+        openclaw gateway run \
+        --bind "$OPENCLAW_GATEWAY_BIND" \
+        --port "$OPENCLAW_GATEWAY_PORT" \
+        --token "$OPENCLAW_GATEWAY_TOKEN" \
+        --verbose &
+else
+    gosu node env HOME=/home/node DBUS_SESSION_BUS_ADDRESS=/dev/null \
+        BUN_INSTALL="/usr/local" PATH="/usr/local/bin:$PATH" \
+        openclaw gateway run \
+        --bind "$OPENCLAW_GATEWAY_BIND" \
+        --port "$OPENCLAW_GATEWAY_PORT" \
+        --token "$OPENCLAW_GATEWAY_TOKEN" \
+        --verbose &
+fi
 GATEWAY_PID=$!
 
 echo "=== OpenClaw Gateway 已启动 (PID: $GATEWAY_PID) ==="
