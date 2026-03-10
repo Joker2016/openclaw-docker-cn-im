@@ -497,11 +497,17 @@ def sync():
                 default_cfg = c.get('default')
                 if not isinstance(default_cfg, dict):
                     default_cfg = {}
-                default_cfg.update({'token': e['WECOM_TOKEN'], 'encodingAesKey': e['WECOM_ENCODING_AES_KEY']})
+                default_cfg.update({'token': e.get('WECOM_TOKEN', ''), 'encodingAesKey': e.get('WECOM_ENCODING_AES_KEY', '')})
                 c['default'] = default_cfg
                 # 清理旧字段，确保统一到多账号格式
                 c.pop('token', None)
                 c.pop('encodingAesKey', None)
+                # 清理长连接字段
+                c.pop('botId', None)
+                c.pop('secret', None)
+                c.pop('wsUrl', None)
+                c.pop('heartbeatInterval', None)
+                c.pop('reconnectRetries', None)
             
             if 'commands' not in c:
                 c['commands'] = {'enabled': True, 'allowlist': ['/new', '/status', '/help', '/compact']}
@@ -646,57 +652,6 @@ def sync():
         # --- 3.5 企业微信多账号冲突检测 ---
         validate_wecom_multi_accounts(channels)
         
-        # --- 3.6 企业微信长连接配置同步 ---
-        def sync_wecom_stream_config(channels, env):
-            wecom = channels.get('wecom')
-            if not isinstance(wecom, dict):
-                return
-            
-            stream_mode = env.get('WECOM_STREAM_MODE', 'false').lower() == 'true'
-            bot_id = env.get('WECOM_BOT_ID', '').strip()
-            secret = env.get('WECOM_BOT_SECRET', '').strip()
-            
-            wecom['streamMode'] = stream_mode
-            
-            if stream_mode and bot_id and secret:
-                # 长连接配置
-                wecom.update({
-                    'botId': bot_id,
-                    'secret': secret,
-                    'wsUrl': env.get('WECOM_WS_URL', 'wss://openws.work.weixin.qq.com').strip(),
-                    'heartbeatInterval': int(env.get('WECOM_HEARTBEAT_INTERVAL', '30000')),
-                    'reconnectRetries': int(env.get('WECOM_RECONNECT_RETRIES', '5'))
-                })
-                print('✅ 企业微信长连接配置已同步')
-                
-                # 清理Webhook专用字段以避免混淆
-                wecom.pop('token', None)
-                wecom.pop('encodingAesKey', None)
-            elif stream_mode and (not bot_id or not secret):
-                print('⚠️ 长连接模式已启用但缺少 BotID 或 Secret，请检查环境变量')
-            
-            # 确保Webhook配置在非长连接模式时保留
-            if not stream_mode:
-                wecom.pop('botId', None)
-                wecom.pop('secret', None)
-                wecom.pop('wsUrl', None)
-                wecom.pop('heartbeatInterval', None)
-                wecom.pop('reconnectRetries', None)
-                token = env.get('WECOM_TOKEN', '').strip()
-                encoding_aes_key = env.get('WECOM_ENCODING_AES_KEY', '').strip()
-                if token and encoding_aes_key:
-                    # 确保default账号的Webhook配置
-                    default_account = wecom.get('default')
-                    if not isinstance(default_account, dict):
-                        default_account = {}
-                        wecom['default'] = default_account
-                    default_account.update({
-                        'token': token,
-                        'encodingAesKey': encoding_aes_key
-                    })
-        
-        sync_wecom_stream_config(channels, env)
-
         # --- 4. Gateway 同步 ---
         if env.get('OPENCLAW_GATEWAY_TOKEN'):
             gw = ensure_path(config, ['gateway'])
