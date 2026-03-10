@@ -71,6 +71,12 @@ RUN cd /home/node/.openclaw/extensions && \
   cd qqbot && \
   timeout 300 openclaw plugins install . || true && \
   timeout 300 openclaw plugins install @sunnoy/wecom || true && \
+    # 如果@sunnoy/wecom插件安装成功，添加WebSocket长连接所需的依赖
+    if [ -d "/home/node/.openclaw/extensions/wecom" ]; then \
+      cd /home/node/.openclaw/extensions/wecom && \
+      echo "安装企业微信长连接依赖..." && \
+      npm install ws@^8.17.0 node-cache@^5.1.2 pino@^9.3.1 --save --omit=dev --legacy-peer-deps || echo "依赖安装失败，但继续..." ; \
+    fi && \
   # 预执行安装命令（容器内需手动交互，此处仅作声明或环境准备）
   # feishu-plugin-onboard install && \
   find /home/node/.openclaw/extensions -name ".git" -type d -exec rm -rf {} + && \
