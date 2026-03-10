@@ -46,6 +46,13 @@ x-openclaw-common-env: &openclaw-common-env
   # 企业微信配置
   WECOM_TOKEN: ${WECOM_TOKEN}
   WECOM_ENCODING_AES_KEY: ${WECOM_ENCODING_AES_KEY}
+  # 企业微信长连接模式（与 Webhook 模式二选一）
+  WECOM_STREAM_MODE: ${WECOM_STREAM_MODE:-false}
+  WECOM_BOT_ID: ${WECOM_BOT_ID}
+  WECOM_BOT_SECRET: ${WECOM_BOT_SECRET}
+  WECOM_WS_URL: ${WECOM_WS_URL:-wss://openws.work.weixin.qq.com}
+  WECOM_HEARTBEAT_INTERVAL: ${WECOM_HEARTBEAT_INTERVAL:-30000}
+  WECOM_RECONNECT_RETRIES: ${WECOM_RECONNECT_RETRIES:-5}
   # 企业微信多账号配置（JSON 字符串，示例见 .env.example）
   WECOM_BOTS_JSON: ${WECOM_BOTS_JSON}
   # 工作空间配置
