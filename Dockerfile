@@ -77,7 +77,7 @@ RUN cd /home/node/.openclaw/extensions && \
       if [ -n "$WECOM_DIR" ]; then \
         cd "$WECOM_DIR" && \
         echo "安装企业微信长连接依赖..." && \
-        npm install ws@^8.17.0 node-cache@^5.1.2 pino@^9.3.1 --save --omit=dev --legacy-peer-deps || echo "依赖安装失败，但继续..." ; \
+        npm install ws@^8.17.0 node-cache@^5.1.2 pino@^9.3.1 @wecom/aibot-node-sdk --save --omit=dev --legacy-peer-deps || echo "依赖安装失败，但继续..." ; \
       fi ; \
     fi && \
   # 预执行安装命令（容器内需手动交互，此处仅作声明或环境准备）
