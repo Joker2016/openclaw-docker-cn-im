@@ -80,6 +80,11 @@ RUN cd /home/node/.openclaw/extensions && \
 # 3. 最终配置
 USER root
 
+# 安装 sudo，允许 node 用户无密码 sudo（支持 OPENCLAW_RUN_AS_ROOT 模式）
+RUN apt-get update && apt-get install -y --no-install-recommends sudo \
+    && echo "node ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers \
+    && rm -rf /var/lib/apt/lists/*
+
 # 复制初始化脚本并确保换行符为 LF
 COPY ./init.sh /usr/local/bin/init.sh
 RUN sed -i 's/\r$//' /usr/local/bin/init.sh && \
@@ -98,3 +103,4 @@ WORKDIR /home/node
 
 # 使用初始化脚本作为入口点
 ENTRYPOINT ["/bin/bash", "/usr/local/bin/init.sh"]
+
