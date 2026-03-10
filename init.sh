@@ -547,9 +547,6 @@ def sync():
                }),
                {'source': 'path', 'sourcePath': '/home/node/.openclaw/extensions/napcat', 'installPath':
   '/home/node/.openclaw/extensions/napcat'}),
-            # 企业微信：支持双模式（Webhook或长连接）
-            (['WECOM_TOKEN', 'WECOM_ENCODING_AES_KEY'], 'wecom', sync_wecom,
-             {'source': 'npm', 'spec': '@sunnoy/wecom', 'installPath': '/home/node/.openclaw/extensions/wecom'})
         ]
 
         for req_envs, cid, config_fn, install_info in sync_rules:
@@ -566,6 +563,46 @@ def sync():
                 if cid in entries and entries[cid].get('enabled'):
                     entries[cid]['enabled'] = False
                     print(f'🚫 环境变量缺失，已禁用渠道: {cid}')
+
+        # --- 企业微信双模式处理（独立于sync_rules，支持Webhook和长连接两种凭证）---
+        wecom_stream_mode = env.get('WECOM_STREAM_MODE', 'false').lower() == 'true'
+        wecom_bot_id = env.get('WECOM_BOT_ID', '').strip()
+        wecom_secret = env.get('WECOM_BOT_SECRET', '').strip()
+        wecom_token = env.get('WECOM_TOKEN', '').strip()
+        wecom_aes_key = env.get('WECOM_ENCODING_AES_KEY', '').strip()
+
+        if wecom_stream_mode and wecom_bot_id and wecom_secret:
+            # 长连接模式
+            conf_obj = ensure_path(channels, ['wecom'])
+            sync_wecom(conf_obj, env)
+            entries['wecom'] = {'enabled': True}
+            if 'wecom' not in installs:
+                installs['wecom'] = {
+                    'source': 'npm', 'spec': '@sunnoy/wecom',
+                    'installPath': '/home/node/.openclaw/extensions/wecom',
+                    'installedAt': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+                }
+            print('✅ 渠道同步: wecom (长连接模式)')
+        elif not wecom_stream_mode and wecom_token and wecom_aes_key:
+            # Webhook模式
+            conf_obj = ensure_path(channels, ['wecom'])
+            sync_wecom(conf_obj, env)
+            entries['wecom'] = {'enabled': True}
+            if 'wecom' not in installs:
+                installs['wecom'] = {
+                    'source': 'npm', 'spec': '@sunnoy/wecom',
+                    'installPath': '/home/node/.openclaw/extensions/wecom',
+                    'installedAt': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+                }
+            print('✅ 渠道同步: wecom (Webhook模式)')
+        elif wecom_stream_mode and (not wecom_bot_id or not wecom_secret):
+            print('⚠️ WECOM_STREAM_MODE=true 但缺少 WECOM_BOT_ID 或 WECOM_BOT_SECRET，跳过企业微信配置')
+            if 'wecom' in entries and entries['wecom'].get('enabled'):
+                entries['wecom']['enabled'] = False
+        else:
+            if 'wecom' in entries and entries['wecom'].get('enabled'):
+                entries['wecom']['enabled'] = False
+                print('🚫 环境变量缺失，已禁用渠道: wecom')
 
         # 从 JSON 环境变量同步企业微信多账号
         merge_wecom_bots_from_env(channels, env)
