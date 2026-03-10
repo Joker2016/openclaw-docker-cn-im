@@ -480,16 +480,13 @@ def sync():
             bot_id = e.get('WECOM_BOT_ID', '').strip()
             secret = e.get('WECOM_BOT_SECRET', '').strip()
             
-            c['streamMode'] = stream_mode
-            
             if stream_mode and bot_id and secret:
-                # 长连接模式配置
+                # 长连接模式配置（官方插件 @wecom/wecom-openclaw-plugin 标准字段）
                 c.update({
                     'botId': bot_id,
                     'secret': secret,
-                    'wsUrl': e.get('WECOM_WS_URL', 'wss://openws.work.weixin.qq.com').strip(),
-                    'heartbeatInterval': int(e.get('WECOM_HEARTBEAT_INTERVAL', '30000')),
-                    'reconnectRetries': int(e.get('WECOM_RECONNECT_RETRIES', '5'))
+                    'websocketUrl': e.get('WECOM_WS_URL', 'wss://openws.work.weixin.qq.com').strip(),
+                    'sendThinkingMessage': e.get('WECOM_SEND_THINKING_MESSAGE', 'true').lower() == 'true'
                 })
                 print('ℹ️ 企业微信长连接模式已启用')
             else:
@@ -505,9 +502,8 @@ def sync():
                 # 清理长连接字段
                 c.pop('botId', None)
                 c.pop('secret', None)
-                c.pop('wsUrl', None)
-                c.pop('heartbeatInterval', None)
-                c.pop('reconnectRetries', None)
+                c.pop('websocketUrl', None)
+                c.pop('sendThinkingMessage', None)
             
             if 'commands' not in c:
                 c['commands'] = {'enabled': True, 'allowlist': ['/new', '/status', '/help', '/compact']}
@@ -584,7 +580,7 @@ def sync():
             entries['wecom'] = {'enabled': True}
             if 'wecom' not in installs:
                 installs['wecom'] = {
-                    'source': 'npm', 'spec': '@sunnoy/wecom',
+                    'source': 'npm', 'spec': '@wecom/wecom-openclaw-plugin',
                     'installPath': '/home/node/.openclaw/extensions/wecom',
                     'installedAt': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
                 }
@@ -596,7 +592,7 @@ def sync():
             entries['wecom'] = {'enabled': True}
             if 'wecom' not in installs:
                 installs['wecom'] = {
-                    'source': 'npm', 'spec': '@sunnoy/wecom',
+                    'source': 'npm', 'spec': '@wecom/wecom-openclaw-plugin',
                     'installPath': '/home/node/.openclaw/extensions/wecom',
                     'installedAt': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
                 }
@@ -623,7 +619,7 @@ def sync():
             if 'wecom' not in installs:
                 installs['wecom'] = {
                     'source': 'npm',
-                    'spec': '@sunnoy/wecom',
+                    'spec': '@wecom/wecom-openclaw-plugin',
                     'installPath': '/home/node/.openclaw/extensions/wecom',
                     'installedAt': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
                 }
