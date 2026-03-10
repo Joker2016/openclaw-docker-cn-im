@@ -4,6 +4,11 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Docker image tag (e.g. wecom-websocket, latest, v1.0.0)'
+        required: false
+        default: ''
 
 jobs:
   build:
@@ -26,14 +31,30 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Determine tags
+        id: tags
+        run: |
+          CUSTOM_TAG="${{ github.event.inputs.tag }}"
+          SHA_TAG="joker2026/openclaw-docker-cn-im:${{ github.sha }}"
+
+          if [ -n "$CUSTOM_TAG" ]; then
+            # 手动触发且指定了 tag：只打自定义 tag + sha tag，不覆盖 latest
+            TAGS="${SHA_TAG}\njoker2026/openclaw-docker-cn-im:${CUSTOM_TAG}"
+          else
+            # push 到 main 或手动触发未指定 tag：打 latest + sha tag
+            TAGS="${SHA_TAG}\njoker2026/openclaw-docker-cn-im:latest"
+          fi
+
+          echo "tags<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$TAGS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Build and Push (linux/arm64)
         uses: docker/build-push-action@v5
         with:
           context: .
           platforms: linux/arm64
           push: true
-          tags: |
-            joker2026/openclaw-docker-cn-im:latest
-            joker2026/openclaw-docker-cn-im:${{ github.sha }}
+          tags: ${{ steps.tags.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
